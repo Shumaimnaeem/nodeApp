@@ -27,81 +27,75 @@ const pubsub = new PubSub();
 const httpServer = createServer(app);
 
 
-const typeDefs = gql`
-type product {
-    id : Int
-    title : String!
-    description : String
-}
+// const typeDefs = gql`
+// type product {
+//     id : Int
+//     title : String!
+//     description : String
+// }
 
-input ProductInput {
-    id : Int
-    title : String!
-    description : String
-}
+// input ProductInput {
+//     id : Int
+//     title : String!
+//     description : String
+// }
 
-type Query {
-    hello : String
-    getAllProducts : [product]
-    getProductById(id: Int) : [product]
-}
+// type Query {
+//     hello : String
+//     getAllProducts : [product]
+//     getProductById(id: Int) : [product]
+// }
 
-type Mutation {
-    addProduct(id : Int, title : String! , description : String) : product
-    updateProduct(id : Int, title : String! , description : String) : product
-    deleteProduct(id : Int) : product
-}
+// type Mutation {
+//     addProduct(id : Int, title : String! , description : String) : product
+//     updateProduct(id : Int, title : String! , description : String) : product
+//     deleteProduct(id : Int) : product
+// }
 
-type Subscription {
-    newProduct : product!
-}`;
+// type Subscription {
+//     newProduct : product!
+// }`;
 
 
-// const schema = buildSchema(`
-//     type product {
-//         id : Int
-//         title : String!
-//         description : String
-//     }
+const schema = buildSchema(`
+    type product {
+        id : Int
+        title : String!
+        description : String
+    }
 
-//     type Query {
-//         hello : String
-//         getAllProducts : [product]
-//         getProductById(id: Int) : [product]
-//     }
+    type Query {
+        hello : String
+        getAllProducts : [product]
+        getProductById(id: Int) : [product]
+    }
 
-//     input ProductInput {
-//         id : Int
-//         title : String!
-//         description : String
-//     }
+    input ProductInput {
+        id : Int
+        title : String!
+        description : String
+    }
 
-//     type Mutation {
-//         addProduct(id : Int, title : String! , description : String) : product
-//         updateProduct(id : Int, title : String! , description : String) : product
-//         deleteProduct(id : Int) : product
-//     }
+    type Mutation {
+        addProduct(id : Int, title : String! , description : String) : product
+        updateProduct(id : Int, title : String! , description : String) : product
+        deleteProduct(id : Int) : product
+    }
 
-//     type Subscription {
-//         newProduct : product!
-//     }
-// `)
+    type Subscription {
+        newProduct : product!
+    }
+`)
 const new_Prod = 'NEW_PROD'
-const resolvers = {
-    Subscription : {
-        newProduct : {
-            subscribe: (_ , __ , {pubsub}) => pubsub.asyncIterator(new_Prod)
-        }
+const root = {
+    
+    
+    getAllProducts : async() => {
+        let prod = await Product.find();
+        console.log("All Products: ", prod)
+        return prod;
     },
-    Query :{
-        getAllProducts : async() => {
-            let prod = await Product.find();
-            console.log("All Products: ", prod)
-            return prod;
-        }
-    },
-    Mutation : {
-        addProduct : (args) => {
+    addProduct : (args) => {
         console.log("args",args)
         console.log("args.product: ", args.product)
         const prod = new Product({
@@ -109,16 +103,12 @@ const resolvers = {
             title : args.title,
             description : args.description
         });
-        pubsub.publish(new_Prod,{
-            newProduct : prod
-        });
         prod.save();
         console.log("Prod: ", prod)
         return args.product;
-        }
+        
     },
-    Mutation : {
-        updateProduct : (args) => {
+    updateProduct : (args) => {
             console.log("Upadte: ", args)
             Product.findOneAndUpdate({'id' : args.id}, args, function (err, post) {
                 if (err) 
@@ -127,10 +117,8 @@ const resolvers = {
                 return post;
             });
             // return args.product;
-        }
     },
-    Query : {
-        getProductById : async (args) => {
+     getProductById : async (args) => {
             console.log("product by id: ", args)
             let prod = await Product.find({'id' : args.id});
             console.log("Prod: ", prod)
@@ -142,56 +130,122 @@ const resolvers = {
             //     console.log("Prod: ", product)    
             //     return product;
             //   });
-        }
+        
     },
-    Mutation : {
-        deleteProduct : async(args) => {
+    deleteProduct : async(args) => {
         Product.findOneAndRemove({'id':args.id}, args, function (err, post) {
             if (err) 
                 console.log("err: ", err);
             return post;
           });
-        }
+        
     }
 }
+// const resolvers = {
+//     Subscription : {
+//         newProduct : {
+//             subscribe: (_ , __ , {pubsub}) => pubsub.asyncIterator(new_Prod)
+//         }
+//     },
+//     Query :{
+//         getAllProducts : async() => {
+//             let prod = await Product.find();
+//             console.log("All Products: ", prod)
+//             return prod;
+//         }
+//     },
+//     Mutation : {
+//         addProduct : (args) => {
+//         console.log("args",args)
+//         console.log("args.product: ", args.product)
+//         const prod = new Product({
+//             id : args.id,
+//             title : args.title,
+//             description : args.description
+//         });
+//         // pubsub.publish(new_Prod,{
+//         //     newProduct : prod
+//         // });
+//         prod.save();
+//         console.log("Prod: ", prod)
+//         return args.product;
+//         }
+//     },
+//     Mutation : {
+//         updateProduct : (args) => {
+//             console.log("Upadte: ", args)
+//             Product.findOneAndUpdate({'id' : args.id}, args, function (err, post) {
+//                 if (err) 
+//                     return next(err);
+//                 console.log("Post: ", post)    
+//                 return post;
+//             });
+//             // return args.product;
+//         }
+//     },
+//     Query : {
+//         getProductById : async (args) => {
+//             console.log("product by id: ", args)
+//             let prod = await Product.find({'id' : args.id});
+//             console.log("Prod: ", prod)
+//             return prod;
 
-const server = new ApolloServer({
-    typeDefs,
-    resolvers,
-    plugins: [{
-      async serverWillStart() {
-        return {
-          async drainServer() {
-            subscriptionServer.close();
-          }
-        };
-      }
-    }],
-  });
+//             // await Product.find({'id' : args.id},function (err, product) {
+//             //     if (err) 
+//             //         console.log("err: ", err);
+//             //     console.log("Prod: ", product)    
+//             //     return product;
+//             //   });
+//         }
+//     },
+//     Mutation : {
+//         deleteProduct : async(args) => {
+//         Product.findOneAndRemove({'id':args.id}, args, function (err, post) {
+//             if (err) 
+//                 console.log("err: ", err);
+//             return post;
+//           });
+//         }
+//     }
+// }
 
- const subscriptionServer = SubscriptionServer.create({
-    // This is the `schema` we just created.
-    typeDefs, 
-    resolvers,
-    // These are imported from `graphql`.
-    execute,
-    subscribe,
- }, {
-    // This is the `httpServer` we created in a previous step.
-    server: httpServer,
-    // This `server` is the instance returned from `new ApolloServer`.
-    path: server.graphqlPath,
- });
+// const server = new ApolloServer({
+//     typeDefs,
+//     resolvers,
+//     plugins: [{
+//       async serverWillStart() {
+//         return {
+//           async drainServer() {
+//             subscriptionServer.close();
+//           }
+//         };
+//       }
+//     }],
+//   });
+
+//  const subscriptionServer = SubscriptionServer.create({
+//     // This is the `schema` we just created.
+//     typeDefs, 
+//     resolvers,
+//     // These are imported from `graphql`.
+//     execute,
+//     subscribe,
+//  }, {
+//     // This is the `httpServer` we created in a previous step.
+//     server: httpServer,
+//     // This `server` is the instance returned from `new ApolloServer`.
+//     path: server.graphqlPath,
+//  });
 
  
 
 app.use('/graphql', graphqlHTTP({
     graphiql : true,
-    schema : typeDefs,
-    rootValue: resolvers
+    schema : schema,
+    rootValue: root
 }))
 
-server.listen(3000, () => {
+app.listen(3000, () => {
     console.log("Server listening on port 3000");
 })
 
